@@ -1,0 +1,37 @@
+{
+  "name": "graphql-aggregation-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GraphQL gateway aggregating multiple REST microservices",
+  "scripts": {
+    "dev": "concurrently -n gateway,users,orders,products -c cyan,green,yellow,magenta \"pnpm --filter gateway dev\" \"pnpm --filter user-service dev\" \"pnpm --filter order-service dev\" \"pnpm --filter product-service dev\"",
+    "build": "pnpm --filter shared build && pnpm --filter './packages/*' --parallel build",
+    "build:services": "pnpm --filter user-service build && pnpm --filter order-service build && pnpm --filter product-service build",
+    "build:gateway": "pnpm --filter gateway build",
+    "lint": "pnpm --filter './packages/*' --parallel lint",
+    "typecheck": "pnpm --filter './packages/*' --parallel typecheck",
+    "seed": "pnpm --filter user-service seed && pnpm --filter order-service seed && pnpm --filter product-service seed",
+    "prisma:migrate": "pnpm --filter user-service prisma:migrate && pnpm --filter order-service prisma:migrate && pnpm --filter product-service prisma:migrate",
+    "docker:up": "docker-compose up --build",
+    "docker:down": "docker-compose down -v",
+    "docker:logs": "docker-compose logs -f",
+    "healthcheck": "ts-node scripts/healthcheck.ts"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@apollo/protobufjs",
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma"
+    ]
+  }
+}
