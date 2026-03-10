@@ -29,5 +29,8 @@ Thumbs.db
 # Docker
 docker-compose.override.yml
 
-# Prisma generated
+# Prisma generated clients (regenerated via `prisma generate`)
+packages/*/src/generated/
+
+# Package node_modules
 packages/*/node_modules/
