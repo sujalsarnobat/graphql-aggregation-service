@@ -15,10 +15,12 @@ COPY packages/shared ./packages/shared
 COPY packages/order-service ./packages/order-service
 
 RUN pnpm --filter @gas/shared build
-RUN pnpm --filter order-service build
 
 WORKDIR /app/packages/order-service
 RUN pnpm exec prisma generate
+
+WORKDIR /app
+RUN pnpm --filter order-service build
 
 # ─── Stage 2: Production Runtime ─────────────────────────────────────────────
 FROM node:20-alpine AS runtime

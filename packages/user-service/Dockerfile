@@ -16,13 +16,14 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared ./packages/shared
 COPY packages/user-service ./packages/user-service
 
-# Build shared first, then user-service
+# Build shared first, then generate Prisma client, then build user-service
 RUN pnpm --filter @gas/shared build
-RUN pnpm --filter user-service build
 
-# Generate Prisma Client
 WORKDIR /app/packages/user-service
 RUN pnpm exec prisma generate
+
+WORKDIR /app
+RUN pnpm --filter user-service build
 
 # ─── Stage 2: Production Runtime ─────────────────────────────────────────────
 FROM node:20-alpine AS runtime
