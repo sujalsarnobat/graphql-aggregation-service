@@ -24,7 +24,7 @@ RUN npm install -g pnpm@9
 
 WORKDIR /app
 
-COPY pnpm-workspace.yaml package.json tsconfig.base.json ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/gateway/package.json ./packages/gateway/
 
