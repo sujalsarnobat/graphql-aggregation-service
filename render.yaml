@@ -1,0 +1,112 @@
+# Render Blueprint — deploys the full GraphQL Aggregation Service stack
+# Docs: https://render.com/docs/infrastructure-as-code
+#
+# Usage:
+#   1. Push this repo to GitHub
+#   2. Go to dashboard.render.com → New → Blueprint
+#   3. Connect your repo — Render reads this file and creates all services
+#
+# Redis note: Render's managed Redis requires a paid plan.
+# For the free tier use Upstash (https://upstash.com) — create a free Redis
+# database and paste the connection string as REDIS_URL in each service's
+# environment variables on the Render dashboard.
+
+databases:
+  - name: gas-postgres
+    databaseName: gas
+    user: gas
+    plan: free
+    postgresMajorVersion: 16
+
+services:
+  # ─── User Service ──────────────────────────────────────────────────────────
+  - type: web
+    name: gas-user-service
+    env: docker
+    dockerfilePath: ./packages/user-service/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gas-postgres
+          property: connectionString
+
+  # ─── Order Service ─────────────────────────────────────────────────────────
+  - type: web
+    name: gas-order-service
+    env: docker
+    dockerfilePath: ./packages/order-service/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3002
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gas-postgres
+          property: connectionString
+
+  # ─── Product Service ───────────────────────────────────────────────────────
+  - type: web
+    name: gas-product-service
+    env: docker
+    dockerfilePath: ./packages/product-service/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3003
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gas-postgres
+          property: connectionString
+
+  # ─── GraphQL Gateway ───────────────────────────────────────────────────────
+  - type: web
+    name: gas-gateway
+    env: docker
+    dockerfilePath: ./packages/gateway/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      # After deploying the three services above, replace these with the
+      # actual Render service URLs (e.g. https://gas-user-service.onrender.com)
+      - key: USER_SERVICE_URL
+        value: https://gas-user-service.onrender.com
+      - key: ORDER_SERVICE_URL
+        value: https://gas-order-service.onrender.com
+      - key: PRODUCT_SERVICE_URL
+        value: https://gas-product-service.onrender.com
+      # Set this to your Upstash Redis URL on the dashboard (free tier):
+      # redis://default:<password>@<host>.upstash.io:6379
+      - key: REDIS_URL
+        sync: false
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 60000
+      - key: RATE_LIMIT_MAX
+        value: 100
+      - key: CACHE_TTL_USER
+        value: 60
+      - key: CACHE_TTL_ORDER
+        value: 30
+      - key: CACHE_TTL_PRODUCT
+        value: 120
+      - key: SERVICE_TIMEOUT_MS
+        value: 2000

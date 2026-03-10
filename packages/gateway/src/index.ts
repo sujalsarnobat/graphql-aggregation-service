@@ -13,7 +13,10 @@ import { resolvers } from './schema/resolvers/index';
 import { createLogger } from '@gas/shared';
 import { createRedisCache, closeRedis, getRedisClient } from './cache/redis';
 import { rateLimiter } from './middleware/rateLimit';
+import { requestIdMiddleware } from './middleware/requestId';
+import { httpLogger } from './middleware/httpLogger';
 import { loggingPlugin } from './plugins/logging.plugin';
+import { complexityPlugin } from './plugins/complexity.plugin';
 import { formatError } from './plugins/error-formatting';
 import { UserDataSource } from './datasources/user.datasource';
 import { OrderDataSource } from './datasources/order.datasource';
@@ -39,7 +42,7 @@ async function bootstrap() {
     typeDefs,
     resolvers,
     cache,
-    plugins: [loggingPlugin],
+    plugins: [loggingPlugin, complexityPlugin],
     formatError,
     introspection: config.NODE_ENV !== 'production',
     includeStacktraceInErrorResponses: config.NODE_ENV === 'development',
@@ -72,6 +75,12 @@ async function bootstrap() {
 
   app.use(bodyParser.json({ limit: '1mb' }));
 
+  // Assign a unique request ID to every request (reuses x-request-id if present)
+  app.use(requestIdMiddleware);
+
+  // Morgan-style HTTP access log: method, url, status, latency, requestId
+  app.use(httpLogger);
+
   // Rate limiting (skips /health)
   app.use(rateLimiter);
 
@@ -100,7 +109,7 @@ async function bootstrap() {
   app.use(
     '/graphql',
     expressMiddleware(server, {
-      context: async (): Promise<GatewayContext> => {
+      context: async ({ res }): Promise<GatewayContext> => {
         // Each request gets its own DataSource instances and DataLoader
         // DataLoader cache is per-request by design (no cross-request leaking)
         const users = new UserDataSource(config.USER_SERVICE_URL, { cache });
@@ -110,6 +119,7 @@ async function bootstrap() {
         return {
           dataSources: { users, orders, products },
           productLoader: createProductLoader(products),
+          requestId: res.locals['requestId'] as string,
         };
       },
     }),

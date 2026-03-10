@@ -8,8 +8,9 @@ export const loggingPlugin: ApolloServerPlugin<GatewayContext> = {
   async requestDidStart(requestContext) {
     const startTime = Date.now();
     const operationName = requestContext.request.operationName ?? 'anonymous';
+    const requestId = requestContext.contextValue?.requestId;
 
-    logger.info({ operationName }, 'GraphQL request started');
+    logger.info({ operationName, requestId }, 'GraphQL request started');
 
     return {
       async didEncounterErrors(
@@ -19,6 +20,7 @@ export const loggingPlugin: ApolloServerPlugin<GatewayContext> = {
           logger.error(
             {
               operationName,
+              requestId,
               message: err.message,
               path: err.path,
               extensions: err.extensions,
@@ -30,7 +32,7 @@ export const loggingPlugin: ApolloServerPlugin<GatewayContext> = {
 
       async willSendResponse() {
         const duration = Date.now() - startTime;
-        logger.info({ operationName, duration: `${duration}ms` }, 'GraphQL request completed');
+        logger.info({ operationName, requestId, duration: `${duration}ms` }, 'GraphQL request completed');
       },
     };
   },

@@ -33,6 +33,12 @@ const envSchema = z.object({
     .optional()
     .transform((v) => (v ? Number(v) : 120)),
 
+  // Abort upstream HTTP calls after this many ms; resolver returns null (partial result)
+  SERVICE_TIMEOUT_MS: z
+    .string()
+    .optional()
+    .transform((v) => (v ? Number(v) : 2000)),
+
   LOG_LEVEL: z.string().optional(),
 });
 

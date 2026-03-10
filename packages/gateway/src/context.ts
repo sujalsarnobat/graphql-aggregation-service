@@ -15,6 +15,8 @@ export interface GatewayContext {
    * product fetches across all Order.product field resolvers in one query.
    */
   productLoader: DataLoader<string, ProductDTO>;
+  /** Unique ID for this request — appears in every log line for correlation. */
+  requestId: string;
 }
 
 export function createProductLoader(
