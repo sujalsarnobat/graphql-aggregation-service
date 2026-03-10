@@ -14,13 +14,19 @@ RUN pnpm install --frozen-lockfile
 COPY packages/shared ./packages/shared
 COPY packages/product-service ./packages/product-service
 
+# 1. Build shared
 RUN pnpm --filter @gas/shared build
 
+# 2. Generate Prisma client BEFORE tsc
 WORKDIR /app/packages/product-service
 RUN pnpm exec prisma generate
 
+# 3. Compile TypeScript
 WORKDIR /app
 RUN pnpm --filter product-service build
+
+# 4. Copy generated Prisma client into dist/
+RUN cp -r packages/product-service/src/generated packages/product-service/dist/generated
 
 # ─── Stage 2: Production Runtime ─────────────────────────────────────────────
 FROM node:20-alpine AS runtime
@@ -37,7 +43,6 @@ RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/product-service/dist ./packages/product-service/dist
-COPY --from=builder /app/packages/product-service/node_modules/.prisma ./packages/product-service/node_modules/.prisma
 
 COPY packages/product-service/prisma ./packages/product-service/prisma
 
@@ -47,6 +52,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3003
 
-# Retry migrate up to 10 times (30s apart) to survive Render's postgres cold start.
-# Seed is NOT run here — run it once manually via Render Shell after first deploy.
 CMD ["sh", "-c", "for i in 1 2 3 4 5 6 7 8 9 10; do echo \"Migration attempt $i...\"; pnpm exec prisma migrate deploy && break; sleep 30; done && node dist/index.js"]
