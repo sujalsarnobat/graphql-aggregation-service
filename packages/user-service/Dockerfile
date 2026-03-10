@@ -51,5 +51,6 @@ ENV NODE_ENV=production
 
 EXPOSE 3001
 
-# Run migrations then start
-CMD ["sh", "-c", "pnpm exec prisma migrate deploy && pnpm exec prisma db seed && node dist/index.js"]
+# Retry migrate up to 10 times (30s apart) to survive Render's postgres cold start.
+# Seed is NOT run here — run it once manually via Render Shell after first deploy.
+CMD ["sh", "-c", "for i in 1 2 3 4 5 6 7 8 9 10; do echo \"Migration attempt $i...\"; pnpm exec prisma migrate deploy && break; sleep 30; done && node dist/index.js"]
