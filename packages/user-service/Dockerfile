@@ -1,5 +1,5 @@
 # ─── Stage 1: Build ──────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 
 RUN npm install -g pnpm@9
 
@@ -30,7 +30,7 @@ RUN pnpm --filter user-service build
 RUN cp -r packages/user-service/src/generated packages/user-service/dist/generated
 
 # ─── Stage 2: Production Runtime ─────────────────────────────────────────────
-FROM node:20-alpine AS runtime
+FROM node:20-bookworm-slim AS runtime
 
 RUN npm install -g pnpm@9
 
@@ -40,7 +40,8 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/user-service/package.json ./packages/user-service/
 
-RUN pnpm install --frozen-lockfile --prod
+# Keep Prisma CLI available in runtime for `prisma migrate deploy`.
+RUN pnpm install --frozen-lockfile
 
 # Copy compiled output (includes dist/generated/prisma from step 4 above)
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist

@@ -1,5 +1,5 @@
 # ─── Stage 1: Build ──────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 
 RUN npm install -g pnpm@9
 
@@ -29,7 +29,7 @@ RUN pnpm --filter order-service build
 RUN cp -r packages/order-service/src/generated packages/order-service/dist/generated
 
 # ─── Stage 2: Production Runtime ─────────────────────────────────────────────
-FROM node:20-alpine AS runtime
+FROM node:20-bookworm-slim AS runtime
 
 RUN npm install -g pnpm@9
 
@@ -39,7 +39,8 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/order-service/package.json ./packages/order-service/
 
-RUN pnpm install --frozen-lockfile --prod
+# Keep Prisma CLI available in runtime for `prisma migrate deploy`.
+RUN pnpm install --frozen-lockfile
 
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/order-service/dist ./packages/order-service/dist
