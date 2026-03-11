@@ -61,4 +61,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3002
 
-CMD ["sh", "-c", "if [ -n \"$PRISMA_SCHEMA\" ]; then case \"$DATABASE_URL\" in *\\?*) export DATABASE_URL=\"$DATABASE_URL&schema=$PRISMA_SCHEMA\" ;; *) export DATABASE_URL=\"$DATABASE_URL?schema=$PRISMA_SCHEMA\" ;; esac; fi; for i in 1 2 3 4 5 6 7 8 9 10; do echo \"Migration attempt $i...\"; pnpm exec prisma migrate deploy && break; sleep 30; done && node dist/index.js"]
+CMD ["sh", "-c", "if [ -n \"$PRISMA_SCHEMA\" ]; then case \"$DATABASE_URL\" in *\\?*) export DATABASE_URL=\"$DATABASE_URL&schema=$PRISMA_SCHEMA\" ;; *) export DATABASE_URL=\"$DATABASE_URL?schema=$PRISMA_SCHEMA\" ;; esac; fi; for i in 1 2 3 4 5 6 7 8 9 10; do echo \"Migration attempt $i...\"; pnpm exec prisma migrate deploy && break; sleep 30; done && pnpm exec prisma db seed && node dist/index.js"]
