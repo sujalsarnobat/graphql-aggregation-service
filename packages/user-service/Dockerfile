@@ -1,6 +1,10 @@
 # ─── Stage 1: Build ──────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim AS builder
 
+RUN apt-get update -y \
+	&& apt-get install -y --no-install-recommends openssl ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
+
 RUN npm install -g pnpm@9
 
 WORKDIR /app
@@ -31,6 +35,10 @@ RUN cp -r packages/user-service/src/generated packages/user-service/dist/generat
 
 # ─── Stage 2: Production Runtime ─────────────────────────────────────────────
 FROM node:20-bookworm-slim AS runtime
+
+RUN apt-get update -y \
+	&& apt-get install -y --no-install-recommends openssl ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g pnpm@9
 
