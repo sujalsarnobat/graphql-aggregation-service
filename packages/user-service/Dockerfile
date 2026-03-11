@@ -55,5 +55,7 @@ ENV NODE_ENV=production
 
 EXPOSE 3001
 
-# Retry migrate up to 10 times (30s apart) to survive Render's postgres cold start.
-CMD ["sh", "-c", "for i in 1 2 3 4 5 6 7 8 9 10; do echo \"Migration attempt $i...\"; pnpm exec prisma migrate deploy && break; sleep 30; done && node dist/index.js"]
+# On Render, all services share one Postgres instance. PRISMA_SCHEMA isolates
+# migrations/tables per service by appending schema=<name> to DATABASE_URL.
+# Retry migrate up to 10 times (30s apart) to survive postgres cold start.
+CMD ["sh", "-c", "if [ -n \"$PRISMA_SCHEMA\" ]; then case \"$DATABASE_URL\" in *\\?*) export DATABASE_URL=\"$DATABASE_URL&schema=$PRISMA_SCHEMA\" ;; *) export DATABASE_URL=\"$DATABASE_URL?schema=$PRISMA_SCHEMA\" ;; esac; fi; for i in 1 2 3 4 5 6 7 8 9 10; do echo \"Migration attempt $i...\"; pnpm exec prisma migrate deploy && break; sleep 30; done && node dist/index.js"]
