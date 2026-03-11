@@ -92,14 +92,14 @@ services:
         value: production
       - key: PORT
         value: 4000
-      # After deploying the three services above, replace these with the
-      # actual Render service URLs (e.g. https://gas-user-service.onrender.com)
+      # Use Render internal service networking for service-to-service calls.
+      # This avoids public egress and is the correct default on Render.
       - key: USER_SERVICE_URL
-        value: https://gas-user-service.onrender.com
+        value: http://gas-user-service:3001
       - key: ORDER_SERVICE_URL
-        value: https://gas-order-service.onrender.com
+        value: http://gas-order-service:3002
       - key: PRODUCT_SERVICE_URL
-        value: https://gas-product-service.onrender.com
+        value: http://gas-product-service:3003
       # Set this to your Upstash Redis URL on the dashboard (free tier):
       # redis://default:<password>@<host>.upstash.io:6379
       - key: REDIS_URL
